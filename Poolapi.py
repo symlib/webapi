@@ -27,10 +27,13 @@ def PoolCreateListExtendModifyDelete():
 
     stripemap = {"64kb": "64 KB", "128kb": "128 KB", "256kb": "256 KB", "512kb": "512 KB", "1mb": "1 MB"}
     force_syncmap = {0: "Disabled", 1: "Enabled"}
-    raidmap = {"RAID0": 0,"RAID1": 1, "RAID5": 5, "RAID6": 6}
+    #raidmap = {"RAID0": 0,"RAID1": 1, "RAID5": 5, "RAID6": 6}
     # new raidlevel will be added soon
-    # 2015 -5 -15
-    if pdnum >= 2:
+    # 2017 -5 -15
+
+    # 2017-6-2
+    raidmap = {"RAID0": 0, "RAID1": 1, "RAID5": 5, "RAID6": 6,"RAID10": 10, "RAID50": 50, "RAID60": 60}
+    if pdnum >= 1:
         if len(availpdlist)==1:
             raidlevel="RAID0"
         if len(availpdlist) == 2:
@@ -39,7 +42,10 @@ def PoolCreateListExtendModifyDelete():
             raidlevel = "RAID5"
         elif len(availpdlist) >= 4:
             raidlevel = random.choice(["RAID5", "RAID6"])
-
+        elif len(availpdlist) >= 6:
+            raidlevel = "RAID50"
+        elif len(availpdlist) >= 8:
+            raidlevel = random.choice(["RAID50", "RAID60"])
         pds = random.choice(availpdlist)
 
         parameters = {
@@ -114,7 +120,7 @@ def PoolCreateListExtendModifyDelete():
                     # verify the pds in the pool before and after the extend operation
 
     else:
-        tolog("You should have at least two disks to create a pool")
+        tolog("You should have at least one disk to create a pool")
 
     if Failflag:
         tolog(Fail)
