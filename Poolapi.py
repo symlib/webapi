@@ -21,7 +21,7 @@ def PoolCreateListExtendModifyDelete():
     pdnum = len(availpdlist)
     stripe = random.choice(["64kb", "128kb", "256kb", "512kb", "1mb"])
     sector = random.choice(["512b", "1kb", "2kb", "4kb"])
-
+    raidlevel=""
     force_sync = random.choice([0, 1])
 
 
@@ -52,7 +52,7 @@ def PoolCreateListExtendModifyDelete():
             "name": name, "pds": availpdlist, "raid_level": raidlevel, "ctrl_id": 1, "stripe": stripe, "sector": sector,
             "force_sync": force_sync}
 
-        poolcreateres = server.webapi("post", "pool", parameters)
+        poolcreateres = server.webapiurlbody("post", "pool", body=parameters)
 
         if poolcreateres["text"] != "":
             tolog("Creating pool %s with pds %s, raidlevel %s, stripe %s, sector %s, force_sync %s failed" % (
@@ -63,7 +63,7 @@ def PoolCreateListExtendModifyDelete():
             tolog("Creating pool %s with pds %s, raidlevel %s, stripe %s, sector %s, force_sync %s  sucessfully" % (
                 name, str(availpdlist), raidlevel, stripe, sector, force_sync))
 
-        poollistview = server.webapi("get", "pool")
+        poollistview = server.webapiurlbody("get", "pool")
 
         # server.webapiurl("delete", "pool", "0?force=0")
         poolview = json.loads(poollistview["text"])
@@ -84,7 +84,7 @@ def PoolCreateListExtendModifyDelete():
 
                     tolog("Verifying transfer the pool %s to different controller by api view.." % name)
                     transferpara =poolid+ "/transfer"
-                    pooltransferres = server.webapiurl("put", "pool", transferpara)
+                    pooltransferres = server.webapiurlbody("put", "pool", urlparameter=transferpara)
                     if pooltransferres["text"] != "":
                         Failflag = True
                         tolog("Pool Transfer failed by api transfer")
@@ -93,9 +93,9 @@ def PoolCreateListExtendModifyDelete():
 
                     newname = {"name":random_key(20)}
                     renameurl = poolid + "/rename"
-                    server.webapiurlbody("put", "pool", renameurl,newname)
+                    server.webapiurlbody("put", "pool", urlparameter=renameurl,body=newname)
 
-                    poolrenameres = server.webapi("get", "pool")
+                    poolrenameres = server.webapiurlbody("get", "pool")
                     poolrenameres=json.loads(poolrenameres["text"])
                     #print poolrenameres,poolrenameres["name"]
                     if poolrenameres[0]["name"]!= newname["name"]:
@@ -106,7 +106,7 @@ def PoolCreateListExtendModifyDelete():
 
 
                     urlparameter = poolid + "?force=1"
-                    pooldeleteres = server.webapiurl("delete", "pool", urlparameter)
+                    pooldeleteres = server.webapiurlbody("delete", "pool", urlparameter=urlparameter)
                     if pooldeleteres["text"] != "":
                         Failflag = True
                         tolog("Pool delete failed by api delete.")
@@ -133,7 +133,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
 
     name = random_key(10)
 
-    poollistview = server.webapi("get", "pool")
+    poollistview = server.webapiurlbody("get", "pool")
 
 
     poolview = json.loads(poollistview["text"])
@@ -163,8 +163,8 @@ def VolumeCreateListExtendModifyDelete(poolid):
         "name": name, "pool_id": poolid, "capacity": capacity, "block": blocksize, "sector": sectorsize,
         #"compress": compress,
         "sync": sync, "thin_prov": thin_prov}
-    print parameters
-    volumecreateres = server.webapi("post", "volume", parameters)
+    #print parameters
+    volumecreateres = server.webapiurlbody("post", "volume", body=parameters)
 
     if volumecreateres["text"] != "":
         tolog("Creating volume %s failed" % name)
@@ -174,7 +174,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
         tolog("Creating volume %s successfully" % name)
 
 
-        volumelistview = server.webapi("get", "volume")
+        volumelistview = server.webapiurlbody("get", "volume")
 
     # server.webapiurl("delete", "pool", "0?force=0")
         volumeview = json.loads(volumelistview["text"])
@@ -195,12 +195,12 @@ def VolumeCreateListExtendModifyDelete(poolid):
                     tolog("Verifying the created volume %s failed" % name)
                     Failflag = True
                 else:
-                    tolog("Verifying the created volume %s sucessfully by api view." % name)
+                    tolog("Verifying the created volume %s sucessfully by api." % name)
 
                 if volume["status"]=="Exported":
                     tolog("Verifying volume unexport")
                     urlpara=volumeid+"/unexport"
-                    unexportres=server.webapiurl("post","volume",urlpara)
+                    unexportres=server.webapiurlbody("post","volume",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying volume unexport failed.")
@@ -210,7 +210,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
                 elif volume["status"]=="Un-exported":
                     tolog("Verifying volume export")
                     urlpara = volumeid + "/export"
-                    exportres = server.webapiurl("post", "volume", urlpara)
+                    exportres = server.webapiurlbody("post", "volume", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying volume export failed.")
@@ -219,7 +219,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
                 if volume["status"]=="Un-exported":
                     tolog("Verifying volume export")
                     urlpara=volumeid+"/export"
-                    unexportres=server.webapiurl("post","volume",urlpara)
+                    unexportres=server.webapiurlbody("post","volume",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying volume export failed.")
@@ -229,7 +229,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
                 elif volume["status"]=="Exported":
                     tolog("Verifying volume unexport")
                     urlpara = volumeid + "/unexport"
-                    exportres = server.webapiurl("post", "volume", urlpara)
+                    exportres = server.webapiurlbody("post", "volume", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying volume unexport failed.")
@@ -238,7 +238,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
                 newname = {"name": random_key(20)}
                 tolog("Verifying modify the volume name from %s to %s by api view." %(name,newname["name"]))
                 urlpara =volumeid
-                volumerenameres = server.webapiurl("put", "volume", urlpara)
+                volumerenameres = server.webapiurlbody("put", "volume", urlparameter=urlpara)
                 if volumerenameres["text"] != "":
                     Failflag = True
                     tolog("Volume rename failed by api")
@@ -250,7 +250,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
                     # Body paramemters
 
                     urlpara=volumeid
-                    volumerenameres=server.webapi("get","volume",urlpara)
+                    volumerenameres=server.webapiurlbody("get","volume",urlparameter=urlpara)
 
                     volumerenameres=json.loads(volumerenameres)
                     if volumerenameres["name"]!=newname:
@@ -263,7 +263,7 @@ def VolumeCreateListExtendModifyDelete(poolid):
 
                 tolog("Verifying volume delete.")
                 urlparameter = volumeid + "?force=1"
-                volumedeleteres = server.webapiurl("delete", "volume", urlparameter)
+                volumedeleteres = server.webapiurlbody("delete", "volume", urlparameter=urlparameter)
                 if volumedeleteres["text"] != "":
                     Failflag = True
                     tolog("volume delete failed by api delete.")
@@ -280,7 +280,7 @@ def CI_VolumeCreateListExtendModifyDelete(poolid):
 
     name = random_key(10)
 
-    poollistview = server.webapi("get", "pool")
+    poollistview = server.webapiurlbody("get", "pool")
 
 
     poolview = json.loads(poollistview["text"])
@@ -288,8 +288,8 @@ def CI_VolumeCreateListExtendModifyDelete(poolid):
 
     blocksizelst = ["512b", "1kb", "2kb", "4kb", "8kb", "16kb", "32kb", "64kb", "128kb"]
     sectorsizelst = ["512b", "1kb", "2kb", "4kb"]
-    mincapacity = 16
-    maxcapacity = 1000000
+    mincapacity = 1
+    maxcapacity = 10
     compresslst=["off", "lzjb","gzip","gzip1","gzip2","gzip3","gzip4","gzip5","gzip6","gzip7","gzip8","gzip9","zle","lz4"]
     synclst=["standard","always","disabled"]
     thin_provlst=[0,1]
@@ -310,8 +310,8 @@ def CI_VolumeCreateListExtendModifyDelete(poolid):
         "name": name, "pool_id": poolid, "capacity": capacity, "block": blocksize, "sector": sectorsize,
         #"compress": compress,
         "sync": sync, "thin_prov": thin_prov}
-    print parameters
-    volumecreateres = server.webapi("post", "volume", parameters)
+
+    volumecreateres = server.webapiurlbody("post", "volume", body=parameters)
 
     if volumecreateres["text"] != "":
         tolog("Creating volume %s failed" % name)
@@ -321,7 +321,7 @@ def CI_VolumeCreateListExtendModifyDelete(poolid):
         tolog("Creating volume %s successfully" % name)
 
 
-        volumelistview = server.webapi("get", "volume")
+        volumelistview = server.webapiurlbody("get", "volume")
 
     # server.webapiurl("delete", "pool", "0?force=0")
         volumeview = json.loads(volumelistview["text"])
@@ -330,6 +330,7 @@ def CI_VolumeCreateListExtendModifyDelete(poolid):
 
             if volume["name"] == name:
                 volumeid = str(volume["id"])
+                # print volume
 
             #{u'sector': u'512 Bytes', u'create_date': u'2017-05-11 07:48:16', u'logbias': u'latency', u'sync': u'disabled',
                 # u'snapshots': [], u'redundant_md': u'all', u'id': 1, u'ctrl_id': 2, u'export_id': 1, u'operational_status':
@@ -344,73 +345,69 @@ def CI_VolumeCreateListExtendModifyDelete(poolid):
                 else:
                     tolog("Verifying the created volume %s sucessfully by api view." % name)
 
-                if volume["status"]=="Exported":
-                    tolog("Verifying volume unexport")
-                    urlpara=volumeid+"/unexport"
-                    unexportres=server.webapiurl("post","volume",urlpara)
-                    #unexportres = json.loads(unexportres["text"])
-                    if unexportres["text"]!="":
-                        tolog("Verifying volume unexport failed.")
-                        Failflag=True
-                    else:
-                        tolog("Verifying volume unexport successfully.")
-                elif volume["status"]=="Un-exported":
-                    tolog("Verifying volume export")
-                    urlpara = volumeid + "/export"
-                    exportres = server.webapiurl("post", "volume", urlpara)
-                    # unexportres = json.loads(unexportres["text"])
-                    if exportres["text"] != "":
-                        tolog("Verifying volume export failed.")
-                        Failflag = True
+                for i in range(2):
+                    volumelistview = server.webapiurlbody("get", "volume")
 
-                if volume["status"]=="Un-exported":
-                    tolog("Verifying volume export")
-                    urlpara=volumeid+"/export"
-                    unexportres=server.webapiurl("post","volume",urlpara)
-                    #unexportres = json.loads(unexportres["text"])
-                    if unexportres["text"]!="":
-                        tolog("Verifying volume export failed.")
-                        Failflag=True
-                    else:
-                        tolog("Verifying volume export successfully.")
-                elif volume["status"]=="Exported":
-                    tolog("Verifying volume unexport")
-                    urlpara = volumeid + "/unexport"
-                    exportres = server.webapiurl("post", "volume", urlpara)
-                    # unexportres = json.loads(unexportres["text"])
-                    if exportres["text"] != "":
-                        tolog("Verifying volume unexport failed.")
-                        Failflag = True
+                    volumeview = json.loads(volumelistview["text"])
+                    for volume1 in volumeview:
+
+                        if volume1["status"]=="Exported":
+                            tolog("Verifying volume unexport")
+                            urlpara=volumeid+"/unexport"
+                            server.webapiurlbody("post","volume",urlparameter=urlpara)
+                            #unexportres = json.loads(unexportres["text"])
+
+                            volumelistview = server.webapiurlbody("get", "volume")
+
+                            volumeview = json.loads(volumelistview["text"])
+                            for volume2 in volumeview:
+                                # print volume1
+
+                                if volume2["name"] == volume["name"] and volume2["status"]=="Un-Exported":
+                                    tolog("Verifying volume unexport successfully.")
+
+                                else:
+                                    tolog("Verifying volume unexport failed.")
+                                    Failflag=True
+
+                        elif volume1["status"]=="Un-Exported":
+                            tolog("Verifying volume export")
+                            urlpara = volumeid + "/export"
+                            server.webapiurlbody("post", "volume", urlparameter=urlpara)
+                            volumelistview = server.webapiurlbody("get", "volume")
+
+                            volumeview = json.loads(volumelistview["text"])
+                            for volume2 in volumeview:
+
+                                if volume2["name"] == volume["name"] and volume2["status"] == "Exported":
+                                    tolog("Verifying volume export successfully.")
+
+                                else:
+                                    tolog("Verifying volume export failed.")
+                                    Failflag = True
 
                 newname = {"name": random_key(20)}
-                tolog("Verifying modify the volume name from %s to %sby api view." %(name,newname))
+                tolog("Verifying modify the volume name from %s to %s by api view." %(name,newname["name"]))
                 urlpara =volumeid
-                volumerenameres = server.webapiurl("put", "volume", urlpara)
-                if volumerenameres["text"] != "":
+                server.webapiurlbody("put", "volume", urlparameter=urlpara,body=newname)  # To be added 2017-5-15
+
+
+                urlpara = volumeid
+                volumerenameres = server.webapiurlbody("get", "volume", urlparameter=urlpara)
+
+                volumerenameres = json.loads(volumerenameres["text"])
+                
+                if volumerenameres[0]["name"] != newname:
                     Failflag = True
                     tolog("Volume rename failed by api")
+
                 else:
-
-                    # To be added 2017-5-15
-                    # Body Parameters
-                    #
-                    # Body paramemters
-
-                    urlpara=volumeid
-                    volumerenameres=server.webapi("get","volume",urlpara)
-
-                    volumerenameres=json.loads(volumerenameres)
-                    if volumerenameres["name"]!=newname:
-                        Failflag = True
-                        tolog("Volume rename failed by api")
-
-                    else:
-                        tolog("Volume rename successfully by api")
+                    tolog("Volume rename successfully by api")
 
 
                 tolog("Verifying volume delete.")
                 urlparameter = volumeid + "?force=1"
-                volumedeleteres = server.webapiurl("delete", "volume", urlparameter)
+                volumedeleteres = server.webapiurlbody("delete", "volume", urlparameter=urlparameter)
                 if volumedeleteres["text"] != "":
                     Failflag = True
                     tolog("volume delete failed by api delete.")
@@ -443,7 +440,7 @@ def SnapshotCreateListModifyDelete(sourceid):
     parameters = {
         "name": name, "source_id": sourceid,"type":type}
 
-    volumecreateres = server.webapi("post", "snapshot", parameters)
+    volumecreateres = server.webapiurlbody("post", "snapshot", body=parameters)
 
     if volumecreateres["text"] != "":
         tolog("Creating snapshot %s failed" % name)
@@ -452,7 +449,7 @@ def SnapshotCreateListModifyDelete(sourceid):
 
         tolog("Creating snapshot %s successfully" % name)
 
-        snapshotlistview = server.webapi("get", "snapshot")
+        snapshotlistview = server.webapiurlbody("get", "snapshot")
 
     # server.webapiurl("delete", "pool", "0?force=0")
         snapshotview = json.loads(snapshotlistview["text"])
@@ -473,7 +470,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara=snapshotid+"/unexport"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot unexport failed.")
@@ -483,7 +480,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara = snapshotid + "/export"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot export failed.")
@@ -492,7 +489,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara=volumeid+"/export"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot export failed.")
@@ -502,7 +499,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara = snapshotid + "/unexport"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot unexport failed.")
@@ -510,7 +507,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara=snapshotid+"/unexport"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot unexport failed.")
@@ -520,7 +517,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara = snapshotid + "/export"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot export failed.")
@@ -529,7 +526,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara=volumeid+"/export"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot export failed.")
@@ -539,7 +536,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara = snapshotid + "/unexport"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot unexport failed.")
@@ -549,7 +546,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                 newname = {"name": random_key(20)}
                 tolog("Verifying modify the snapshot name from %s to %sby api view." %(name,newname))
                 urlpara =snapshotid
-                renameres = server.webapiurl("put", "snapshot", urlpara)
+                renameres = server.webapiurlbody("put", "snapshot", urlparameter=urlpara)
                 if renameres["text"] != "":
                     Failflag = True
                     tolog("snapshot rename failed by api")
@@ -561,7 +558,7 @@ def SnapshotCreateListModifyDelete(sourceid):
                     # Body paramemters
 
                     urlpara=snapshotid
-                    renameres=server.webapi("get","snapshot",urlpara)
+                    renameres=server.webapiurlbody("get","snapshot",urlparameter=urlpara)
 
                     renameres=json.loads(renameres)
                     if renameres["name"]!=newname:
@@ -574,7 +571,7 @@ def SnapshotCreateListModifyDelete(sourceid):
 
                 tolog("Verifying snapshot delete.")
                 urlparameter = snapshotid + "?force=1"
-                deleteres = server.webapiurl("delete", "snapshot", urlparameter)
+                deleteres = server.webapiurlbody("delete", "snapshot", urlparameter=urlparameter)
                 if deleteres["text"] != "":
                     Failflag = True
                     tolog("snapshot delete failed by api delete.")
@@ -592,7 +589,7 @@ def CloneCreateListModifyDelete(sourceid):
 
     name = random_key(10)
 
-    volumelistview = server.webapi("get", "volume")
+    volumelistview = server.webapiurlbody("get", "volume")
 
 
     volumeview = json.loads(volumelistview["text"])
@@ -606,7 +603,7 @@ def CloneCreateListModifyDelete(sourceid):
     parameters = {
         "name": name, "source_id": sourceid,"type":type}
 
-    volumecreateres = server.webapi("post", "snapshot", parameters)
+    volumecreateres = server.webapiurlbody("post", "snapshot", body=parameters)
 
     if volumecreateres["text"] != "":
         tolog("Creating snapshot %s failed" % name)
@@ -636,7 +633,7 @@ def CloneCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara=snapshotid+"/unexport"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot unexport failed.")
@@ -646,7 +643,7 @@ def CloneCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara = snapshotid + "/export"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot export failed.")
@@ -655,7 +652,7 @@ def CloneCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara=volumeid+"/export"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot export failed.")
@@ -665,7 +662,7 @@ def CloneCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara = snapshotid + "/unexport"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot unexport failed.")
@@ -673,7 +670,7 @@ def CloneCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara=snapshotid+"/unexport"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot unexport failed.")
@@ -683,7 +680,7 @@ def CloneCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara = snapshotid + "/export"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot export failed.")
@@ -692,7 +689,7 @@ def CloneCreateListModifyDelete(sourceid):
                 if snapshot["status"]=="Un-exported":
                     tolog("Verifying snapshot export")
                     urlpara=volumeid+"/export"
-                    unexportres=server.webapiurl("post","snapshot",urlpara)
+                    unexportres=server.webapiurlbody("post","snapshot",urlparameter=urlpara)
                     #unexportres = json.loads(unexportres["text"])
                     if unexportres["text"]!="":
                         tolog("Verifying snapshot export failed.")
@@ -702,7 +699,7 @@ def CloneCreateListModifyDelete(sourceid):
                 elif snapshot["status"]=="Exported":
                     tolog("Verifying snapshot unexport")
                     urlpara = snapshotid + "/unexport"
-                    exportres = server.webapiurl("post", "snapshot", urlpara)
+                    exportres = server.webapiurlbody("post", "snapshot", urlparameter=urlpara)
                     # unexportres = json.loads(unexportres["text"])
                     if exportres["text"] != "":
                         tolog("Verifying snapshot unexport failed.")
@@ -712,7 +709,7 @@ def CloneCreateListModifyDelete(sourceid):
                 newname = {"name": random_key(20)}
                 tolog("Verifying modify the snapshot name from %s to %sby api view." %(name,newname))
                 urlpara =snapshotid
-                renameres = server.webapiurl("put", "snapshot", urlpara)
+                renameres = server.webapiurlbody("put", "snapshot", urlparameter=urlpara)
                 if renameres["text"] != "":
                     Failflag = True
                     tolog("snapshot rename failed by api")
@@ -724,7 +721,7 @@ def CloneCreateListModifyDelete(sourceid):
                     # Body paramemters
 
                     urlpara=snapshotid
-                    renameres=server.webapi("get","snapshot",urlpara)
+                    renameres=server.webapiurlbody("get","snapshot",urlparameter=urlpara)
 
                     renameres=json.loads(renameres)
                     if renameres["name"]!=newname:
@@ -737,7 +734,7 @@ def CloneCreateListModifyDelete(sourceid):
 
                 tolog("Verifying snapshot delete.")
                 urlparameter = snapshotid + "?force=1"
-                deleteres = server.webapiurl("delete", "snapshot", urlparameter)
+                deleteres = server.webapiurlbody("delete", "snapshot", urlparameter=urlparameter)
                 if deleteres["text"] != "":
                     Failflag = True
                     tolog("snapshot delete failed by api delete.")
@@ -751,7 +748,7 @@ def CloneCreateListModifyDelete(sourceid):
 
 
 def getavailpd():
-    res = server.webapi("get", "phydrv")
+    res = server.webapiurlbody("get", "phydrv")
     pdlist = list()
     cleanrestext = json.loads(res["text"])
 
@@ -763,7 +760,7 @@ def getavailpd():
     return pdlist
 
 def getusedpd():
-    res = server.webapi("get", "phydrv")
+    res = server.webapiurlbody("get", "phydrv")
     pdlist = list()
     cleanrestext = json.loads(res["text"])
 
@@ -775,41 +772,19 @@ def getusedpd():
     return pdlist
 
 
-serverip = "10.84.2.164"
-from requests import Request, Session
+def cleanpool():
+    res = server.webapiurlbody("get", "pool")
+    poollist = list()
+    cleanrestext = json.loads(res["text"])
 
-
-# url='https://10.84.2.164/serivce/'
-
-def setupsession():
-    data = {"username": "administrator", "password": "password"}
-    s = requests.Session()
-
-    url = "https://" + serverip + "/service/login"
-    header = dict()
-    header["Content-Type"] = "application/json"
-    req = s.post(url, data=json.dumps(data), headers=header, verify=False)
-    addinfo = req.text.find(",")
-
-    header["additioninfo"] = req.text[2:addinfo - 1]
-
-    return s, header
-
-    # prepped = req.prepare()
-    # prepped = s.prepare_request(req)
-
-    # return s, prepped
-
-
-def webapibody(method, service, body):
-    pass
-
-
-def webapiurlparams(method, service, urlpara):
-    pass
+    for eachpool in cleanrestext:
+        urlpara=str(eachpool["id"])+"?force=1"
+        res=server.webapiurlbody("delete","pool",urlparameter=urlpara)
+        print str((res["text"]))
 
 
 if __name__ == "__main__":
 
-
+    cleanpool()
     PoolCreateListExtendModifyDelete()
+    cleanpool()

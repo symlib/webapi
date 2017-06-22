@@ -26,7 +26,7 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-serverip="10.84.2.164"
+serverip="10.84.2.116"
 from requests import Request, Session
 
 def setupsession():

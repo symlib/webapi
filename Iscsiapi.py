@@ -268,14 +268,14 @@ def Iscsiportal_delete(id):
 
 if __name__ == "__main__":
 
-    # Iscsinodegetinfo()
-
-    # Iscsiportal_getanddelete()
-    Iscsiportal_add_phyvlan()
+    Iscsinodegetinfo()
 
     Iscsiportal_getanddelete()
-    Iscsitrunk_create()
+    Iscsiportal_add_phyvlan()
 
+    #Iscsiportal_getanddelete()
+    Iscsitrunk_create()
+    #
     Iscsiportal_add_trunk()
     Iscsiportal_getanddelete()
     Iscsitrunk_delete()
