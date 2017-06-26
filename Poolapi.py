@@ -12,6 +12,94 @@ Fail = "'result': 'f'"
 
 sectormap = {"512b": "512 Bytes", "1kb": "1 KB", "2kb": "2 KB", "4kb": "4 KB"}
 
+def poolcreatewithallsettings():
+    Failflag = False
+    name = random_key(30)
+    stripesettings = ["64kb", "128kb", "256kb", "512kb", "1mb"]
+    sectorsettings = ["512b", "1kb", "2kb", "4kb"]
+    force_syncsettings = [0, 1]
+
+    stripemap = {"64kb": "64 KB", "128kb": "128 KB", "256kb": "256 KB", "512kb": "512 KB", "1mb": "1 MB"}
+    force_syncmap = {0: "Disabled", 1: "Enabled"}
+    raidmap = {"RAID0": 0, "RAID1": 1, "RAID5": 5, "RAID6": 6, "RAID10": 10, "RAID50": 50, "RAID60": 60}
+    raids = ["RAID0","RAID1","RAID5","RAID6","RAID10","RAID50","RAID60"]
+    availpdlist = getavailpd()
+    for raidlevel in raids:
+        for stripe in stripesettings:
+            for sector in sectorsettings:
+                for force_sync in force_syncsettings:
+                    if raidlevel=="RAID0":
+                        availpdlist=random.sample(availpdlist,2)
+                    parameters = {
+        "name": name, "pds": availpdlist, "raid_level": raidlevel, "ctrl_id": 1, "stripe": stripe, "sector": sector,
+        "force_sync": force_sync}
+                    #server.webapiurlbody("post","pool",body=parameters)
+                    #print parameters
+                    createobj("pool",parameters)
+                    res=json.loads(viewobj("pool",0))[0]
+                    getpdstr=str(res["pds"]).replace("u","")
+                    parapdstr=str(parameters["pds"]).replace("[","").replace("]","").replace(" ","")
+                    if res["name"]==parameters["name"] and getpdstr==parapdstr and res["stripe"]==stripemap[parameters["stripe"]]\
+                            and res["sector"]==sectormap[parameters["sector"]] and res["force_sync"]==force_syncmap[parameters["force_sync"]] and \
+                        res["raid_level"]==raidmap[parameters["raid_level"]]:
+                        tolog("Succesfully created pool with parameters %s" %(str(parameters)))
+                    else:
+                        Failflag=True
+                        tolog("Failed to create pool  with parameters %s" % (str(parameters)))
+
+                    deleteobj("pool",0)
+
+    if Failflag:
+        tolog(Fail)
+    else:
+        tolog(Pass)
+
+def poolcreatewithallsettings_invalid_parameters():
+    Failflag = False
+    name = random_key(30)
+    stripesettings = ["64kb", "128kb", "256kb", "512kb", "1mb"]
+    sectorsettings = ["512b", "1kb", "2kb", "4kb"]
+    force_syncsettings = [0, 1]
+
+    stripemap = {"64kb": "64 KB", "128kb": "128 KB", "256kb": "256 KB", "512kb": "512 KB", "1mb": "1 MB"}
+    force_syncmap = {0: "Disabled", 1: "Enabled"}
+    raidmap = {"RAID0": 0, "RAID1": 1, "RAID5": 5, "RAID6": 6, "RAID10": 10, "RAID50": 50, "RAID60": 60}
+    raids = ["RAID0","RAID1","RAID5","RAID6","RAID10","RAID50","RAID60"]
+    availpdlist = getavailpd()
+    for raidlevel in raids:
+        for stripe in stripesettings:
+            for sector in sectorsettings:
+                for force_sync in force_syncsettings:
+                    if raidlevel=="RAID0":
+                        availpdlist=random.sample(availpdlist,2)
+                    parameters = {
+        "name": name, "pds": availpdlist, "raid_level": raidlevel, "ctrl_id": 1, "stripe": stripe, "sector": sector,
+        "force_sync": force_sync}
+                    #server.webapiurlbody("post","pool",body=parameters)
+                    #print parameters
+                    createobj("pool",parameters)
+                    res=json.loads(viewobj("pool",0))[0]
+                    getpdstr=str(res["pds"]).replace("u","")
+                    parapdstr=str(parameters["pds"]).replace("[","").replace("]","").replace(" ","")
+                    if res["name"]==parameters["name"] and getpdstr==parapdstr and res["stripe"]==stripemap[parameters["stripe"]]\
+                            and res["sector"]==sectormap[parameters["sector"]] and res["force_sync"]==force_syncmap[parameters["force_sync"]] and \
+                        res["raid_level"]==raidmap[parameters["raid_level"]]:
+                        tolog("Succesfully created pool with parameters %s" %(str(parameters)))
+                    else:
+                        Failflag=True
+                        tolog("Failed to create pool  with parameters %s" % (str(parameters)))
+
+                    deleteobj("pool",0)
+
+    if Failflag:
+        tolog(Fail)
+    else:
+        tolog(Pass)
+def viewobj(obj,objid):
+
+    res=server.webapiurlbody("get",obj,urlparameter=str(objid))
+    return res["text"]
+
 def PoolCreateListExtendModifyDelete():
     Failflag = False
 
@@ -81,15 +169,15 @@ def PoolCreateListExtendModifyDelete():
                     Failflag = True
                 else:
                     tolog("Verifying the created pool %s sucessfully by api view." % name)
-
-                    tolog("Verifying transfer the pool %s to different controller by api view.." % name)
-                    transferpara =poolid+ "/transfer"
-                    pooltransferres = server.webapiurlbody("put", "pool", urlparameter=transferpara)
-                    if pooltransferres["text"] != "":
-                        Failflag = True
-                        tolog("Pool Transfer failed by api transfer")
-                    else:
-                        tolog("Pool Transfer successfully by api transfer")
+                    # June 23,2017, remove the transfer pool feature
+                    # tolog("Verifying transfer the pool %s to different controller by api view.." % name)
+                    # transferpara =poolid+ "/transfer"
+                    # pooltransferres = server.webapiurlbody("put", "pool", urlparameter=transferpara)
+                    # if pooltransferres["text"] != "":
+                    #     Failflag = True
+                    #     tolog("Pool Transfer failed by api transfer")
+                    # else:
+                    #     tolog("Pool Transfer successfully by api transfer")
 
                     newname = {"name":random_key(20)}
                     renameurl = poolid + "/rename"
@@ -419,6 +507,7 @@ def CI_VolumeCreateListExtendModifyDelete(poolid):
 
 def snapshotstatus(id,op):
     pass
+
 
 def SnapshotCreateListModifyDelete(sourceid):
 
@@ -782,9 +871,34 @@ def cleanpool():
         res=server.webapiurlbody("delete","pool",urlparameter=urlpara)
         print str((res["text"]))
 
+def createobj(obj,setting):
+    Failflag=False
+    createres = server.webapiurlbody("post", obj, body=setting)
+
+    if createres["text"] != "":
+        tolog("Creating %s with %s failed" % (obj,str(setting)))
+        Failflag = True
+    else:
+        tolog("Creating %s with %s successfully" % (obj, str(setting)))
+
+    return Failflag
+def deleteobj(obj,objid):
+    Failflag = False
+    urlpara=str(objid)+"?force=1"
+    res = server.webapiurlbody("delete", obj, urlparameter=urlpara)
+    if res["text"] != "":
+        tolog("Deleting %s %s failed" % (obj,str(objid)))
+        Failflag = True
+    else:
+        tolog("Deleting %s %s successfully" % (obj, str(objid)))
+
+    return Failflag
+
+
 
 if __name__ == "__main__":
 
     cleanpool()
-    PoolCreateListExtendModifyDelete()
+    poolcreatewithallsettings()
+
     cleanpool()
